@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat WebSocket</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e9ecef;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px;
+      background: #343a40;
+      color: white;
+      margin: 0;
+    }
+
+    #login-box, #chat-box {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    label, input, button, select {
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    input[type="text"], select {
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #chat-box {
+      display: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    #sidebar {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    #messages-area {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #messages {
+      flex: 1;
+      background: #f8f9fa;
+      padding: 10px;
+      border: 1px solid #ccc;
+      overflow-y: scroll;
+      border-radius: 4px;
+      height: 400px;
+    }
+
+    .message {
+      padding: 5px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+    }
+
+    .message.me {
+      background: #d1e7dd;
+      text-align: right;
+    }
+
+    .message.other {
+      background: #f8d7da;
+      text-align: left;
+    }
+
+    #chat-title {
+      margin: 10px 0;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat en Tiempo Real</h1>
+
+  <div id="login-box">
+    <label for="username">Nombre de usuario:</label>
+    <input type="text" id="username" placeholder="Ingresa tu nombre" />
+    <button id="join-btn">Unirse al chat</button>
+  </div>
+
+  <div id="chat-box">
+    <div id="sidebar">
+      <label for="user-select">Usuarios conectados:</label>
+      <select id="user-select" size="10" multiple></select>
+      <button id="start-chat-btn">Chat privado</button>
+      <button id="create-group-btn">Crear grupo</button>
+    </div>
+
+    <div id="messages-area">
+      <div id="chat-title">Selecciona un chat</div>
+      <div id="messages"></div>
+      <input type="text" id="message" placeholder="Escribe un mensaje..." />
+      <button id="send-btn">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    const socket = io('http://localhost:3000',{
+      autoConnect: false
+    });
+    let username = '';
+    let userId = '';
+    let currentChatId = '';
+    let currentChatName = '';
+
+    document.getElementById('join-btn').addEventListener('click', () => {
+      const input = document.getElementById('username');
+      const name = input.value.trim();
+      if (!name) return alert('Ingresa tu nombre.');
+      username = name;
+
+      socket.connect();
+      socket.emit('join', username);
+    });
+
+    document.getElementById('send-btn').addEventListener('click', () => {
+      const message = document.getElementById('message').value.trim();
+      if (!currentChatId) return alert('Selecciona un chat.');
+      if (!message) return;
+
+      socket.emit('send-message', {
+        chatId: currentChatId,
+        senderId: userId,
+        message,
+      });
+      document.getElementById('message').value = '';
+      console.log(`Mensaje enviado: ${message} en el chat ${currentChatId} por ${userId}`);
+    });
+
+    document.getElementById('start-chat-btn').addEventListener('click', () => {
+      const selected = Array.from(document.getElementById('user-select').selectedOptions);
+      if (selected.length !== 1) return alert('Selecciona un solo usuario.');
+      const otherUserId = selected[0].value;
+      const name = selected[0].textContent;
+
+      if (otherUserId === userId) {
+        return alert('No puedes chatear contigo mismo.');
+      }
+      
+      currentChatName = name;
+      socket.emit('private-chat', { userAId: userId, userBId: otherUserId });
+      console.log(`Iniciando chat privado con ${name} (${otherUserId})`);
+    });
+
+    document.getElementById('create-group-btn').addEventListener('click', () => {
+      const selected = Array.from(document.getElementById('user-select').selectedOptions).map(o => o.value);
+      if (selected.length < 2) return alert('Selecciona mínimo 2 usuarios.');
+      const name = prompt('Nombre del grupo:');
+      if (!name) return;
+      selected.push(userId);
+      currentChatName = name;
+      socket.emit('create-group', { name, memberIds: selected });
+    });
+
+    socket.on('welcome', (data) => {
+      userId = data.userId;
+      alert(data.message);
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('chat-box').style.display = 'flex';
+      socket.emit('get-connected-users');
+    });
+
+    socket.on('connected-users', (users) => {
+      const select = document.getElementById('user-select');
+      select.innerHTML = '';
+      users
+        .filter(u => u.username !== username)
+        .forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = u.username;
+          select.appendChild(opt);
+        });
+        console.log('Usuarios conectados:', users);
+    });
+
+    socket.on('private-chat-created', (chat) => {
+      currentChatId = chat._id;
+      document.getElementById('chat-title').textContent = `Chat con ${currentChatName}`;
+      socket.emit('join-chat', currentChatId);
+    });
+
+    socket.on('group-created', (group) => {
+      alert(`Grupo "${group.name}" creado.`);
+      currentChatId = group._id;
+      document.getElementById('chat-title').textContent = `Grupo: ${group.name}`;
+      socket.emit('join-chat', currentChatId);
+    });
+
+    socket.on('chat-history', (messages) => {
+      const div = document.getElementById('messages');
+      div.innerHTML = '';
+      messages.forEach(addMessage);
+    });
+
+    socket.on('new-message', addMessage);
+
+    function addMessage(msg) {
+      const div = document.getElementById('messages');
+      const el = document.createElement('div');
+      el.classList.add('message');
+      const isMe = msg.sender?.username === username || msg.senderId === userId;
+      el.classList.add(isMe ? 'me' : 'other');
+      el.textContent = `${msg.sender?.username || msg.senderId}: ${msg.content || msg.message}`;
+      div.appendChild(el);
+      div.scrollTop = div.scrollHeight;
+    }
+  </script>
+</body>
+</html>
