@@ -13,16 +13,13 @@ export class ChatService {
     @InjectModel('Message') private messageModel: Model<MessageDocument>,
   ) {}
 
-  async joinUser(username: string, socketId: string): Promise<UserDocument> {
-    let user = await this.userModel.findOne({ username });
-    if (!user) {
-      user = await this.userModel.create({ username, socketId });
-    } else {
-      user.socketId = socketId;
-      await user.save();
-    }
-    return user;
-  }
+async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
+  const user = await this.userModel.findById(userId);
+  if (!user) throw new Error('Usuario no encontrado');
+  user.socketId = socketId;
+  await user.save();
+  return user;
+}
 
   async getUserBy(search: string): Promise<UserDocument | null> {
     return await this.userModel.findOne({

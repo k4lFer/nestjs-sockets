@@ -19,25 +19,23 @@ export class ServerGateway implements OnGatewayDisconnect {
   server: Server;
 
   @SubscribeMessage('join')
-  async handleJoin(@ConnectedSocket() client: Socket, @MessageBody() username: string) {
-    const user = await this.chatService.joinUser(username, client.id);
+  async handleJoin(@ConnectedSocket() client: Socket, @MessageBody() userId: string) {
+    const user = await this.chatService.joinUserById(userId, client.id);
 
     client.emit('welcome', {
-      message: `Bienvenido ${username}!`,
+      message: `Bienvenido ${user.username}!`,
       userId: user._id,
-    })
+    });
 
     const connectedUsers = await this.chatService.getConnectedUsers();
-    this.server.emit('connected-users', connectedUsers.map(u => u.username));
-    // //client.emit('connected-users', connectedUsers.map(u => u.username));
+    this.server.emit('connected-users', connectedUsers.map(u => ({
+      id: u._id,
+      username: u.username,
+    })));
 
-    // Enviar los conectados al cliente, no mostrar al cliente asi mismo
-    //client.emit('connected-users', connectedUsers.filter(u => u.username !== username).map(u =>  u.username ));
-    //this.server.emit('connected-users', connectedUsers.map(u =>  u.username ));
-    //client.to('connected-users').emit('connected-users', connectedUsers.map(u => u.username ));
-
-    console.log(`Usuario ${username} conectado con ID: ${user._id}`);
+    console.log(`Usuario ${user.username} conectado con ID: ${user._id}`);
   }
+
 
   @SubscribeMessage('send-message')
   async handleMessage(
@@ -62,9 +60,16 @@ export class ServerGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('get-chats')
   async handleGetChats(@ConnectedSocket() client: Socket, @MessageBody() userId: string) {
+    const user = await this.chatService.getUserBy(userId);
+    if (!user) {
+      client.emit('error', 'Usuario inválido');
+      return;
+    }
+
     const chats = await this.chatService.getUserChats(userId);
     client.emit('user-chats', chats);
   }
+
 
   @SubscribeMessage('create-group')
   async handleCreateGroup(

@@ -4,6 +4,7 @@ import { Document } from "mongoose";
 @Schema()
 export class UserMongo {
   @Prop({ required: true }) username: string;
+  @Prop({ required: true }) password: string;
   @Prop() socketId?: string; 
 }
 
