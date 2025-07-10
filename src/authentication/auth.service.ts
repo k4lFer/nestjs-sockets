@@ -12,6 +12,11 @@ export class AuthService {
     ) {}
 
     async signUp(input: UserDtoSignUp): Promise<UserDocument> {
+        if(input === undefined) throw new Error('User not found');
+
+        const user = await this.userModel.findOne({ username: input.username });
+        if(user) throw new Error('User already exists');
+
         return await this.userModel.create(input);
     }
 
@@ -20,6 +25,7 @@ export class AuthService {
         if (!user) throw new Error('User not found');
         if (user.password !== input.password) throw new Error('Invalid password');
         return user;
+
     }
 
 }

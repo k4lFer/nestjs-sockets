@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login / Registro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Bienvenido</h1>
+
+    <form id="signup-form">
+      <h2>Registro</h2>
+      <input type="text" id="signup-username" placeholder="Usuario" required />
+      <input type="password" id="signup-password" placeholder="Contraseña" required />
+      <button type="submit">Registrarse</button>
+    </form>
+
+    <form id="signin-form">
+      <h2>Login</h2>
+      <input type="text" id="signin-username" placeholder="Usuario" required />
+      <input type="password" id="signin-password" placeholder="Contraseña" required />
+      <button type="submit">Iniciar sesión</button>
+    </form>
+
+    <div id="response-message"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
