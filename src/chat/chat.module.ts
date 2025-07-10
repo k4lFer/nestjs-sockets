@@ -15,7 +15,10 @@ import { ChatService } from './services/chat.service';
 
         ]),        
     ],
-    controllers: [],
-    providers: [ServerGateway, ChatService],
+    providers: [ChatService, ServerGateway],
+    exports: [
+        ChatService,
+        MongooseModule,
+    ],
 })
 export class ChatModule {}
