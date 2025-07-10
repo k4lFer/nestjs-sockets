@@ -4,7 +4,7 @@ const username = localStorage.getItem('username');
 
 if (!userId) {
   alert('Debes iniciar sesión primero');
-  window.location.href = 'index.html';
+  window.location.href = 'login.html';
 }
 
 const chatBox = document.getElementById('chat-box');
@@ -23,22 +23,23 @@ socket.on('welcome', (data) => {
 // Recibir usuarios conectados
 socket.on('connected-users', (users) => {
   usersList.innerHTML = '';
-  users.forEach(user => {
-    const li = document.createElement('li');
-    li.textContent = user.username;
-    usersList.appendChild(li);
+  users.forEach((user) => {
+    const div = document.createElement('div');
+    div.className = 'user-item';
+    div.textContent = user.username;
+    usersList.appendChild(div);
   });
 });
 
 // Enviar mensaje
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const message = chatInput.value;
-  if (message.trim()) {
+  const message = chatInput.value.trim();
+  if (message) {
     socket.emit('send-message', {
-      chatId: 'global-chat', // puedes cambiarlo por ID real
+      chatId: 'global-chat',
       senderId: userId,
-      message: message
+      message: message,
     });
     chatInput.value = '';
   }
@@ -51,7 +52,15 @@ socket.on('new-message', (msg) => {
 
 function appendMessage(msg) {
   const div = document.createElement('div');
+  div.className = 'message-item';
   div.textContent = msg;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function logout() {
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
+  localStorage.removeItem('token');
+  window.location.href = 'login.html';
 }

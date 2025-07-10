@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Chat</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat en Vivo</title>
+  <link rel="stylesheet" href="minimal.css" />
 </head>
+
 <body>
-  <div class="container">
-    <h1>Chat en Vivo</h1>
+  <div class="container chat-container">
+    <div class="card chat-card">
+      <div class="chat-header">
+        <h2>💬 Chat en Vivo</h2>
+        <button class="btn btn-primary" style="width: auto; padding: 8px 16px;" onclick="logout()">
+          Cerrar Sesión
+        </button>
+      </div>
 
-    <div id="chat-box"></div>
+      <div class="chat-body">
+        <div class="messages-section">
+          <div class="chat-messages" id="chat-box"></div>
 
-    <form id="chat-form">
-      <input type="text" id="chat-input" placeholder="Escribe un mensaje..." required />
-      <button type="submit">Enviar</button>
-    </form>
+          <div class="chat-input">
+            <form id="chat-form">
+              <div class="input-group">
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." required />
+                <button type="submit" class="btn btn-primary">Enviar</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
-    <div>
-      <h3>Usuarios conectados:</h3>
-      <ul id="users-list"></ul>
+        <div class="users-sidebar">
+          <h3 class="users-title">👥 Usuarios Conectados</h3>
+          <div id="users-list"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="chat.js"></script>
 </body>
+
 </html>

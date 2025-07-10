@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión</title>
+    <link rel="stylesheet" href="minimal.css" />
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Iniciar Sesión</h1>
+                <p>Accede a tu cuenta para continuar</p>
+            </div>
+
+            <form id="signin-form" class="form">
+                <div class="form-group">
+                    <label for="signin-username">Usuario</label>
+                    <input type="text" id="signin-username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signin-password">Contraseña</label>
+                    <input type="password" id="signin-password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            </form>
+
+            <div class="footer">
+                <p>¿No tienes cuenta? <a href="register.html" class="link">Regístrate aquí</a></p>
+            </div>
+
+            <div id="message" class="message hidden"></div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+
+</html>

@@ -1,31 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Login / Registro</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App - Inicio</title>
+  <link rel="stylesheet" href="minimal.css" />
 </head>
+
 <body>
   <div class="container">
-    <h1>Bienvenido</h1>
+    <div class="card">
+      <div class="header">
+        <h1>💬 Chat App</h1>
+        <p>Conecta y chatea en tiempo real</p>
+      </div>
 
-    <form id="signup-form">
-      <h2>Registro</h2>
-      <input type="text" id="signup-username" placeholder="Usuario" required />
-      <input type="password" id="signup-password" placeholder="Contraseña" required />
-      <button type="submit">Registrarse</button>
-    </form>
+      <div style="margin: 32px 0;">
+        <a href="login.html" class="btn btn-primary" style="margin-bottom: 12px; text-decoration: none;">
+          Iniciar Sesión
+        </a>
 
-    <form id="signin-form">
-      <h2>Login</h2>
-      <input type="text" id="signin-username" placeholder="Usuario" required />
-      <input type="password" id="signin-password" placeholder="Contraseña" required />
-      <button type="submit">Iniciar sesión</button>
-    </form>
+        <a href="register.html" class="btn"
+          style="background: #e2e8f0; color: #4a5568; text-decoration: none; margin-top: 12px;">
+          Crear Cuenta Nueva
+        </a>
+      </div>
 
-    <div id="response-message"></div>
+      <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+        <div style="text-align: left; color: #718096; font-size: 14px;">
+          <div style="margin: 8px 0; display: flex; align-items: center;">
+            <span style="color: #48bb78; margin-right: 8px;">✓</span>
+            Chat en tiempo real
+          </div>
+          <div style="margin: 8px 0; display: flex; align-items: center;">
+            <span style="color: #48bb78; margin-right: 8px;">✓</span>
+            Lista de usuarios conectados
+          </div>
+          <div style="margin: 8px 0; display: flex; align-items: center;">
+            <span style="color: #48bb78; margin-right: 8px;">✓</span>
+            Interfaz moderna y limpia
+          </div>
+          <div style="margin: 8px 0; display: flex; align-items: center;">
+            <span style="color: #48bb78; margin-right: 8px;">✓</span>
+            Fácil de usar
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    // Verificar si el usuario ya está logueado
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      window.location.href = 'chat.html';
+    }
+  </script>
 </body>
+
 </html>
