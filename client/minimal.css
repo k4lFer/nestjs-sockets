@@ -278,6 +278,19 @@ input:hover {
   margin-bottom: 4px;
   font-size: 14px;
   border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-item:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-item:active {
+  transform: translateY(0);
 }
 
 /* Loading state */

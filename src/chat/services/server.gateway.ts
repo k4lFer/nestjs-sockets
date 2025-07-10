@@ -89,10 +89,13 @@ export class ServerGateway implements OnGatewayDisconnect {
     const userB = await this.chatService.getUserBy(data.userBId);
 
     client.emit('private-chat-created', chat);
+    client.join((chat._id as string).toString());
+
     if (userB?.socketId) {
       this.server.to(userB.socketId).emit('private-chat-created', chat);
+      // También unir al otro usuario a la sala
+      this.server.sockets.sockets.get(userB.socketId)?.join((chat._id as string).toString());
     }
-    client.join((chat._id as string).toString());
   }
 
   @SubscribeMessage('get-connected-users')
