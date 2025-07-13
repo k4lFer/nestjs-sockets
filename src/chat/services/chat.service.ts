@@ -55,6 +55,10 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     return await this.chatModel.find({ members: userId }).populate('members');
   }
 
+  async getUserGroups(userId: string) {
+    return await this.chatModel.find({ isGroup: true, members: userId }).populate('members');
+  }
+
   async getChatMessages(chatId: string) {
     return await this.messageModel.find({ chat: chatId }).populate('sender');
   }

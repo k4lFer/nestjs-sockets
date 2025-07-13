@@ -80,6 +80,15 @@ export class ServerGateway implements OnGatewayDisconnect {
     client.emit('group-created', group);
   }
 
+  @SubscribeMessage('get-groups-by-user')
+  async handleGetGroups(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userId: string
+  ) {
+    const groups = await this.chatService.getUserGroups(userId);
+    client.emit('user-groups', groups);
+  }
+
   @SubscribeMessage('private-chat')
   async handlePrivateChat(
     @ConnectedSocket() client: Socket,
@@ -102,6 +111,23 @@ export class ServerGateway implements OnGatewayDisconnect {
   async handleGetConnectedUsers(@ConnectedSocket() client: Socket) {
     const connectedUsers = await this.chatService.getConnectedUsers();
     client.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
+  }
+
+  @SubscribeMessage('send-file')
+  async handleSendFile(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { 
+      chatId: string; 
+      senderId: string; 
+      fileName: string; 
+      fileType: string; 
+      fileContent: string }
+  ) {
+    /*
+      Manejar archivos pequeños Buffer
+      Manejar archivos grandes GridFS:
+    */
+
   }
 
   async handleDisconnect(client: Socket) {

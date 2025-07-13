@@ -24,6 +24,6 @@ import configuration from './shared/common/config/configuration';
 
   ],
   controllers: [],
-  providers: [ServerGateway, ChatService],
+  providers: [],
 })
 export class AppModule {}
