@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { FileModule } from './file/file.module';
 import configuration from './shared/common/config/configuration';
 
 
@@ -21,6 +22,7 @@ import configuration from './shared/common/config/configuration';
     UserModule,
     ChatModule,
     AuthenticationModule,
+    FileModule,
 
   ],
   controllers: [],
