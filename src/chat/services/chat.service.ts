@@ -1,17 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { UserDocument } from 'src/chat/schemas/user.schema';
 import { MessageDocument } from 'src/chat/schemas/message.schema';
 import { ChatDocument } from 'src/chat/schemas/chat.schema';
+import { GridFSBucket } from 'mongodb';
 
 @Injectable()
 export class ChatService {
+  private bucket: GridFSBucket;
   constructor(
     @InjectModel('User') public userModel: Model<UserDocument>,
     @InjectModel('Chat') private chatModel: Model<ChatDocument>,
     @InjectModel('Message') private messageModel: Model<MessageDocument>,
-  ) {}
+    @InjectConnection() private connection: Connection,
+  ) {
+     this.bucket = new GridFSBucket(this.connection.db!, { bucketName: 'uploads' });
+  }
 
 async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
   const user = await this.userModel.findById(userId);
@@ -63,6 +68,15 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     return await this.messageModel.find({ chat: chatId }).populate('sender');
   }
 
+  async getMessageById(messageId: string) {
+    return this.messageModel.findById(messageId);
+  }
+  getFileStreamFromGridFS(fileId: Types.ObjectId | string) {
+    return this.bucket.openDownloadStream(
+      typeof fileId === 'string' ? new Types.ObjectId(fileId) : fileId,
+    );
+  }
+
   async getConnectedUsers(): Promise<UserDocument[]> {
     return await this.userModel.find({ socketId: { $ne: null } });
   }
@@ -79,4 +93,61 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     });
     return await msg.populate('sender');
   }
+
+  private async processFile(
+    file: Buffer,
+    originalName: string,
+    mimetype: string
+  ): Promise<{
+    filename: string;
+    mimetype: string;
+    size: number;
+    storageType: 'gridfs' | 'buffer';
+    fileId?: Types.ObjectId;
+    data?: Buffer;
+  }> {
+    const storageType = file.length > 16 * 1024 * 1024 ? 'gridfs' : 'buffer';
+
+    const fileMetadata: any = {
+      filename: originalName,
+      mimetype,
+      size: file.length,
+      storageType,
+    };
+
+    if (storageType === 'gridfs') {
+      const uploadStream = this.bucket.openUploadStream(originalName, {
+        contentType: mimetype,
+      });
+      uploadStream.end(file);
+      await new Promise((res, rej) =>
+        uploadStream.on('finish', res).on('error', rej),
+      );
+      fileMetadata.fileId = uploadStream.id;
+    } else {
+      fileMetadata.data = file;
+    }
+
+    return fileMetadata;
+  }
+
+  async createMessageFromBuffer(
+    senderId: string,
+    chatId: string,
+    content: string,
+    file: Express.Multer.File,
+  ) {
+    const fileMetadata = await this.processFile(file.buffer, file.originalname, file.mimetype);
+
+    const msg = await this.messageModel.create({
+      sender: senderId,
+      chat: chatId,
+      content: content?.trim() || '',
+      file: fileMetadata,
+    });
+
+    return await msg.populate('sender');
+  }
+
+
 }

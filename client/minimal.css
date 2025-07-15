@@ -368,3 +368,62 @@ input:hover {
 .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+/* Input de archivos */
+.file-input {
+  padding: 10px 12px;
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2d3748;
+  cursor: pointer;
+  flex: 1;
+}
+
+.file-input:hover {
+  border-color: #cbd5e0;
+}
+
+.file-input::-webkit-file-upload-button {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+  background-color: #3182ce;
+}
+/* Input de archivos */
+.file-input {
+  padding: 10px 12px;
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2d3748;
+  cursor: pointer;
+  flex: 1;
+}
+
+.file-input:hover {
+  border-color: #cbd5e0;
+}
+
+.file-input::-webkit-file-upload-button {
+  background: #4299e1;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+  background-color: #3182ce;
+}
+

@@ -14,6 +14,27 @@ export class MessageMongo {
 
   @Prop({ type: Date, default: Date.now })
   timestamp: Date;
+
+   @Prop({
+    type: {
+      filename: String,
+      mimetype: String,
+      size: Number,
+      storageType: String, // 'buffer' o 'gridfs'
+      fileId: Types.ObjectId, // si es GridFS
+      data: Buffer, // si es buffer
+    },
+    default: null,
+  })
+  file?: {
+    filename: string;
+    mimetype: string;
+    size: number;
+    storageType: 'buffer' | 'gridfs';
+    fileId?: Types.ObjectId;
+    data?: Buffer;
+  };
+
 }
 
 export const MessageSchema = SchemaFactory.createForClass(MessageMongo);

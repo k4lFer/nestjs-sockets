@@ -10,6 +10,7 @@ if (!userId) {
 const chatBox = document.getElementById('chat-box');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+const fileInput = document.getElementById('file-input'); 
 const usersList = document.getElementById('users-list');
 
 // Variables para manejar el chat actual
@@ -80,6 +81,7 @@ socket.on('connected-users', (users) => {
 });
 
 // Enviar mensaje
+/*
 chatForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const message = chatInput.value.trim();
@@ -92,11 +94,103 @@ chatForm.addEventListener('submit', (e) => {
     chatInput.value = '';
   }
 });
+*/
+
+// 📥 Enviar mensaje con o sin archivo
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const message = chatInput.value.trim();
+  const file = fileInput.files[0];
+
+  if (!file) {
+    if (message) {
+      socket.emit('send-message', {
+        chatId: currentChatId,
+        senderId: userId,
+        message: message,
+      });
+      chatInput.value = '';
+    }
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert('⚠️ El archivo excede los 20MB permitidos');
+    fileInput.value = '';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('chatId', currentChatId);
+  formData.append('senderId', userId);
+  formData.append('message', message);
+
+  try {
+    const res = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const msg = await res.json();
+
+    // Ya no es necesario socket.emit('new-message', msg) si el backend lo emite directamente
+    chatInput.value = '';
+    fileInput.value = '';
+  } catch (error) {
+    console.error('Error al subir archivo:', error);
+    alert('Error al enviar archivo');
+  }
+});
+
+// 📎 Validación al seleccionar archivo
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert('⚠️ El archivo excede los 20MB permitidos');
+    fileInput.value = '';
+    return;
+  }
+
+  console.log(`📎 Archivo: ${file.name} (${file.type}) - ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+});
+
+// 📨 Recibir mensajes
+socket.on('new-message', (msg) => {
+  const div = document.createElement('div');
+  div.className = 'message-item';
+
+  if (msg.file) {
+    const label = document.createElement('p');
+    label.textContent = `📎 ${msg.sender.username} envió: ${msg.file.filename}`;
+    div.appendChild(label);
+
+    const link = document.createElement('a');
+    link.href = `http://localhost:3000/download/${msg._id}`;
+    link.textContent = 'Descargar archivo';
+    link.target = '_blank';
+    link.style.color = '#1e88e5';
+    div.appendChild(link);
+  }
+
+  if (msg.content?.trim()) {
+    const content = document.createElement('p');
+    content.textContent = `💬 ${msg.sender.username}: ${msg.content}`;
+    div.appendChild(content);
+  }
+
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
 
 // Recibir mensaje
+/*
 socket.on('new-message', (msg) => {
   appendMessage(`💬 ${msg.sender.username}: ${msg.content}`);
 });
+*/
 
 function appendMessage(msg) {
   const div = document.createElement('div');

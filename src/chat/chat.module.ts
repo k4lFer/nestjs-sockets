@@ -5,6 +5,8 @@ import { ChatSchema } from './schemas/chat.schema';
 import { MessageSchema } from './schemas/message.schema';
 import { ServerGateway } from './services/server.gateway';
 import { ChatService } from './services/chat.service';
+import { FileUploadController } from './controllers/file-upload.controller';
+import { FileDownloadController } from './controllers/file-download.controller';
 
 @Module({
     imports: [
@@ -15,6 +17,7 @@ import { ChatService } from './services/chat.service';
 
         ]),        
     ],
+    controllers: [FileUploadController, FileDownloadController],
     providers: [ChatService, ServerGateway],
     exports: [
         ChatService,

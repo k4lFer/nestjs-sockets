@@ -113,23 +113,6 @@ export class ServerGateway implements OnGatewayDisconnect {
     client.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
   }
 
-  @SubscribeMessage('send-file')
-  async handleSendFile(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { 
-      chatId: string; 
-      senderId: string; 
-      fileName: string; 
-      fileType: string; 
-      fileContent: string }
-  ) {
-    /*
-      Manejar archivos pequeños Buffer
-      Manejar archivos grandes GridFS:
-    */
-
-  }
-
   async handleDisconnect(client: Socket) {
     await this.chatService.disconnectUser(client.id);
     const connectedUsers = await this.chatService.getConnectedUsers();
