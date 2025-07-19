@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ServerGateway } from './chat/services/server.gateway';
 import { DatabaseModule } from './shared/database/database.module';
-import { ChatService } from './chat/services/chat.service';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';

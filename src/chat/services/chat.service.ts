@@ -148,6 +148,7 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
 
     return await msg.populate('sender');
   }
+  
 
 
 }

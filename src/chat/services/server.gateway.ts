@@ -9,11 +9,15 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { Injectable } from '@nestjs/common';
+import { UserService } from 'src/user/user.service';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
 export class ServerGateway implements OnGatewayDisconnect {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly userService: UserService
+  ) { }
 
   @WebSocketServer()
   server: Server;
@@ -118,4 +122,22 @@ export class ServerGateway implements OnGatewayDisconnect {
     const connectedUsers = await this.chatService.getConnectedUsers();
     this.server.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
   }
+
+  @SubscribeMessage('send-friend-request')
+  async handleSendFriendRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string, targetId: string }
+  ) {
+    await this.userService.addFriend(data.userId, data.targetId);
+
+    const target = await this.chatService.getUserBy(data.targetId);
+    if (target?.socketId) {
+      this.server.to(target.socketId).emit('friend-request', {
+        from: data.userId,
+      });
+    }
+
+    client.emit('request-sent', { to: data.targetId });
+  }
+
 }
