@@ -74,7 +74,7 @@ export class ServerGateway implements OnGatewayDisconnect {
     client.emit('user-chats', chats);
   }
 
-
+/*
   @SubscribeMessage('create-group')
   async handleCreateGroup(
     @ConnectedSocket() client: Socket,
@@ -83,6 +83,43 @@ export class ServerGateway implements OnGatewayDisconnect {
     const group = await this.chatService.createGroup(data.name, data.memberIds);
     client.emit('group-created', group);
   }
+  */
+
+  @SubscribeMessage('create-group')
+  async handleCreateGroup(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { name: string; memberIds: string[] }
+  ) {
+    const group = await this.chatService.createGroup(data.name, data.memberIds);
+
+    // Notifica al creador
+    client.emit('group-created', group);
+    client.join((group._id as string).toString());
+
+    for (const memberId of data.memberIds) {
+      if (!memberId) continue;
+
+      const member = await this.chatService.getUserBy(memberId);
+
+      if (member?.socketId) {
+        // Notifica al miembro que fue agregado
+        this.server.to(member.socketId).emit('added-to-group', group);
+
+        // Lo une a la sala del grupo
+        this.server.sockets.sockets.get(member.socketId)?.join((group._id as string).toString());
+
+        // Envía la lista actualizada de grupos a cada usuario
+        const updatedGroups = await this.chatService.getUserGroups(memberId);
+        this.server.to(member.socketId).emit('user-groups', updatedGroups);
+      }
+    }
+
+    // También actualiza la lista de grupos del creador
+    const creatorGroups = await this.chatService.getUserGroups(data.memberIds[0]);
+    client.emit('user-groups', creatorGroups);
+  }
+
+
 
   @SubscribeMessage('get-groups-by-user')
   async handleGetGroups(

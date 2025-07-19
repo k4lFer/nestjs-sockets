@@ -64,6 +64,15 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     return await this.chatModel.find({ isGroup: true, members: userId }).populate('members');
   }
 
+  async searchUserGroups(userId: string, search: string) {
+    return await this.chatModel.find({
+      isGroup: true,
+      members: userId,
+      name: { $regex: search, $options: 'i' }, 
+    }).populate('members');
+  }
+
+
   async getChatMessages(chatId: string) {
     return await this.messageModel.find({ chat: chatId }).populate('sender');
   }
