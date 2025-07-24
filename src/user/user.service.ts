@@ -124,8 +124,6 @@ export class UserService {
         };
     }
 
-
-
     async getPendingRequests(userId: string) {
         const user = await this.userModel.findById(userId).populate('pendingRequests');
         return user?.pendingRequests || [];
@@ -135,8 +133,6 @@ export class UserService {
         const user = await this.userModel.findById(userId).populate('sentRequests');
         return user?.sentRequests || [];
     }
-
-    // user.service.ts
 
     async searchAllUsers(
         currentUserId: string,
@@ -188,6 +184,5 @@ export class UserService {
 
         return { users, total, page, totalPages };
     }
-
-        
+  
 }

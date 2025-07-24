@@ -15,7 +15,7 @@ export class ChatService {
     @InjectModel('Message') private messageModel: Model<MessageDocument>,
     @InjectConnection() private connection: Connection,
   ) {
-     this.bucket = new GridFSBucket(this.connection.db!, { bucketName: 'uploads' });
+      this.bucket = new GridFSBucket(this.connection.db!, { bucketName: 'uploads' });
   }
 
 async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
@@ -80,8 +80,8 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
   async getMessageById(messageId: string) {
     return this.messageModel.findById(messageId);
   }
-  getFileStreamFromGridFS(fileId: Types.ObjectId | string) {
-    return this.bucket.openDownloadStream(
+  async getFileStreamFromGridFS(fileId: Types.ObjectId | string) {
+    return await this.bucket.openDownloadStream(
       typeof fileId === 'string' ? new Types.ObjectId(fileId) : fileId,
     );
   }
@@ -158,6 +158,4 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     return await msg.populate('sender');
   }
   
-
-
 }

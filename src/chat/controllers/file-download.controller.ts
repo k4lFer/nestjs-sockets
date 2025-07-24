@@ -27,7 +27,7 @@ export class FileDownloadController {
     }
 
     if (file.storageType === 'gridfs' && file.fileId) {
-      const stream = this.chatService.getFileStreamFromGridFS(file.fileId);
+      const stream = await this.chatService.getFileStreamFromGridFS(file.fileId);
       return stream.pipe(res);
     }
 

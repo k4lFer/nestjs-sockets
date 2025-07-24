@@ -114,8 +114,8 @@ chatForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  if (file.size > 20 * 1024 * 1024) {
-    alert('⚠️ El archivo excede los 20MB permitidos');
+  if (file.size > 50 * 1024 * 1024) {
+    alert('⚠️ El archivo excede los 50MB permitidos');
     fileInput.value = '';
     return;
   }
@@ -148,8 +148,8 @@ fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  if (file.size > 20 * 1024 * 1024) {
-    alert('⚠️ El archivo excede los 20MB permitidos');
+  if (file.size > 50 * 1024 * 1024) {
+    alert('⚠️ El archivo excede los 50MB permitidos');
     fileInput.value = '';
     return;
   }
@@ -158,13 +158,20 @@ fileInput.addEventListener('change', (e) => {
 });
 
 // 📨 Recibir mensajes
-socket.on('new-message', (msg) => {
+socket.on('new-message', renderMessage);
+socket.on('chat-history', (messages) => {
+  chatBox.innerHTML = '';
+  messages.forEach(renderMessage);
+});
+
+function renderMessage(msg) {
   const div = document.createElement('div');
   div.className = 'message-item';
 
+  // Archivo
   if (msg.file) {
     const label = document.createElement('p');
-    label.textContent = `📎 ${msg.sender.username} envió: ${msg.file.filename}`;
+    label.innerHTML = `📎 <strong>${msg.sender.username}</strong> envió: <em>${msg.file.filename}</em>`;
     div.appendChild(label);
 
     const link = document.createElement('a');
@@ -173,17 +180,30 @@ socket.on('new-message', (msg) => {
     link.target = '_blank';
     link.style.color = '#1e88e5';
     div.appendChild(link);
+
+    // Previsualización si es imagen
+    if (msg.file.mimetype.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = link.href;
+      img.alt = msg.file.filename;
+      img.style.maxWidth = '150px';
+      img.style.display = 'block';
+      img.style.marginTop = '8px';
+      img.onclick = () => openImageModal(link.href);
+      div.appendChild(img);
+    }
   }
 
   if (msg.content?.trim()) {
     const content = document.createElement('p');
-    content.textContent = `💬 ${msg.sender.username}: ${msg.content}`;
+    content.innerHTML = `💬 <strong>${msg.sender.username}</strong>: ${msg.content}`;
     div.appendChild(content);
   }
 
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
-});
+}
+
 
 // Recibir mensaje
 /*
@@ -285,12 +305,36 @@ socket.on('private-chat-created', (chat) => {
 });
 
 // Manejar historial de chat
-socket.on('chat-history', (messages) => {
+/*socket.on('chat-history', (messages) => {
   chatBox.innerHTML = '';
   messages.forEach((msg) => {
     appendMessage(`💬 ${msg.sender.username}: ${msg.content}`);
   });
+});*/
+
+// Mostrar imagen en modal
+function openImageModal(src) {
+  const modal = document.getElementById("image-modal");
+  const modalImg = document.getElementById("modal-image");
+
+  modal.style.display = "flex";
+  modalImg.src = src;
+}
+
+// Cerrar el modal
+function closeImageModal() {
+  const modal = document.getElementById("image-modal");
+  modal.style.display = "none";
+}
+
+// Cerrar modal al hacer clic fuera
+window.addEventListener('click', function (event) {
+  const modal = document.getElementById("image-modal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
 });
+
 
 function logout() {
   localStorage.removeItem('userId');

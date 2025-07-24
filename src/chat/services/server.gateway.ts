@@ -27,7 +27,7 @@ export class ServerGateway implements OnGatewayDisconnect {
     const user = await this.chatService.joinUserById(userId, client.id);
 
     client.emit('welcome', {
-      message: `Bienvenido ${user.username}!`,
+     // message: `Bienvenido ${user.username}!`,
       userId: user._id,
     });
 
