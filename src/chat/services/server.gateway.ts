@@ -24,11 +24,26 @@ export class ServerGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('join')
   async handleJoin(@ConnectedSocket() client: Socket, @MessageBody() userId: string) {
-    const user = await this.chatService.joinUserById(userId, client.id);
+    const existingUser = await this.chatService.getUserBy(userId);
+    if (!existingUser) {
+      client.emit('error', 'Usuario no encontrado');
+      return;
+    }
+
+    // Si ya tenía socketId, desconectar el socket anterior
+    if (existingUser.socketId && existingUser.socketId !== client.id) {
+      const oldSocket = this.server.sockets.sockets.get(existingUser.socketId);
+      if (oldSocket) {
+        oldSocket.emit('forced-disconnect', 'Otro dispositivo se ha conectado con tu cuenta');
+        oldSocket.disconnect(); // Cierra la conexión anterior
+      }
+    }
+
+    // Ahora asociamos el nuevo socketId al usuario
+    await this.chatService.joinUserById(userId, client.id);
 
     client.emit('welcome', {
-     // message: `Bienvenido ${user.username}!`,
-      userId: user._id,
+      userId: existingUser._id,
     });
 
     const connectedUsers = await this.chatService.getConnectedUsers();
@@ -37,8 +52,9 @@ export class ServerGateway implements OnGatewayDisconnect {
       username: u.username,
     })));
 
-    console.log(`Usuario ${user.username} conectado con ID: ${user._id}`);
+    console.log(`Usuario ${existingUser.username} conectado con ID: ${existingUser._id}`);
   }
+
 
 
   @SubscribeMessage('send-message')
@@ -148,16 +164,40 @@ export class ServerGateway implements OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('get-connected-users')
-  async handleGetConnectedUsers(@ConnectedSocket() client: Socket) {
-    const connectedUsers = await this.chatService.getConnectedUsers();
-    client.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
-  }
+    @SubscribeMessage('get-connected-users')
+    async handleGetConnectedUsers(@ConnectedSocket() client: Socket) {
+      const connectedUsers = await this.chatService.getConnectedUsers();
+      client.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
+    }
 
   async handleDisconnect(client: Socket) {
     await this.chatService.disconnectUser(client.id);
     const connectedUsers = await this.chatService.getConnectedUsers();
     this.server.emit('connected-users', connectedUsers.map(u => ({ id: u._id, username: u.username })));
+  }
+
+  @SubscribeMessage('typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { chatId: string; userId: string }
+  ) {
+    client.to(data.chatId).emit('user-typing', data.userId);
+  }
+
+  @SubscribeMessage('message-status')
+  async handleMessageStatus(
+    @MessageBody() data: { messageId: string; status: 'sent' | 'seen' }
+  ) {
+    await this.chatService.updateMessageStatus(data.messageId, data.status);
+    const msg = await this.chatService.getMessageById(data.messageId);
+    if (!msg) return; // Handle case where message might not be found
+    this.server.to(msg.chat).emit('message-status-updated', { messageId: msg._id, status: data.status });
+  }
+
+  @SubscribeMessage('ping')
+  handlePing(@ConnectedSocket() client: Socket) {
+    // Actualiza el campo lastSeen
+    this.chatService.updateLastSeen(client.id); // guarda Date.now()
   }
 
   @SubscribeMessage('send-friend-request')
@@ -175,6 +215,52 @@ export class ServerGateway implements OnGatewayDisconnect {
     }
 
     client.emit('request-sent', { to: data.targetId });
+  }
+
+  @SubscribeMessage('accept-friend-request')
+  async handleAcceptFriendRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string, requesterId: string }
+  ) {
+    await this.userService.acceptFriend(data.userId, data.requesterId);
+
+    const requester = await this.chatService.getUserBy(data.requesterId);
+    const user = await this.chatService.getUserBy(data.userId);
+
+    // Notificar al que envió la solicitud
+    if (requester?.socketId) {
+      this.server.to(requester.socketId).emit('friend-accepted', {
+        from: data.userId,
+      });
+    }
+
+    // Notificar al que la aceptó (opcional, si quieres simetría)
+    if (user?.socketId) {
+      this.server.to(user.socketId).emit('friend-accepted', {
+        from: data.requesterId,
+      });
+    }
+
+    // Confirmación al cliente que aceptó
+    client.emit('friend-added', { with: data.requesterId });
+  }
+
+  
+  @SubscribeMessage('reject-friend-request')
+  async handleRejectFriendRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string, requesterId: string }
+  ) {
+    await this.userService.rejectFriend(data.userId, data.requesterId);
+
+    const requester = await this.chatService.getUserBy(data.requesterId);
+    if (requester?.socketId) {
+      this.server.to(requester.socketId).emit('friend-request-rejected', {
+        from: data.userId,
+      });
+    }
+
+    client.emit('request-rejected', { from: data.requesterId });
   }
 
 }

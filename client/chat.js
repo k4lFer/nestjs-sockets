@@ -12,6 +12,13 @@ const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const fileInput = document.getElementById('file-input'); 
 const usersList = document.getElementById('users-list');
+const recordBtn = document.getElementById('record-btn');
+const timerDisplay = document.getElementById('recording-timer');
+const audioPreviewContainer = document.getElementById('audio-preview-container');
+const audioPreview = document.getElementById('audio-preview');
+const sendAudioBtn = document.getElementById('send-audio-btn');
+const cancelAudioBtn = document.getElementById('cancel-audio-btn');
+
 
 // Variables para manejar el chat actual
 let currentChatId = 'global-chat';
@@ -80,6 +87,111 @@ socket.on('connected-users', (users) => {
   }
 });
 
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let recordStartTime;
+let recordInterval;
+
+recordBtn.addEventListener('click', async () => {
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunks.push(e.data);
+        }
+      };
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      clearInterval(recordInterval);
+      timerDisplay.style.display = 'none';
+
+      // Mostrar preview
+      audioPreview.src = URL.createObjectURL(audioBlob);
+      audioPreviewContainer.style.display = 'block';
+
+      // Guardar temporalmente el blob para usar en el botón "Enviar"
+      audioPreview.dataset.blobUrl = audioPreview.src;
+      audioPreview.dataset.blob = audioBlob;
+    };
+
+
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.textContent = '⏹️';
+      startRecordingTimer();
+    } catch (err) {
+      alert('❌ Error al acceder al micrófono');
+      console.error(err);
+    }
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    recordBtn.textContent = '🎤';
+  }
+});
+
+sendAudioBtn.addEventListener('click', () => {
+  const blob = audioPreview.dataset.blob;
+
+  if (blob) {
+    sendRecordedAudio(new Blob([blob], { type: 'audio/webm' }));
+  }
+
+  audioPreviewContainer.style.display = 'none';
+  audioPreview.src = '';
+  delete audioPreview.dataset.blob;
+});
+
+cancelAudioBtn.addEventListener('click', () => {
+  audioPreviewContainer.style.display = 'none';
+  audioPreview.src = '';
+  delete audioPreview.dataset.blob;
+});
+
+
+
+function startRecordingTimer() {
+  recordStartTime = Date.now();
+  timerDisplay.textContent = '⏱ 00:00';
+  timerDisplay.style.display = 'inline';
+
+  recordInterval = setInterval(() => {
+    const elapsedMs = Date.now() - recordStartTime;
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    timerDisplay.textContent = `⏱ ${minutes}:${seconds}`;
+  }, 1000);
+}
+
+async function sendRecordedAudio(blob) {
+  const formData = new FormData();
+  formData.append('file', blob, `audio-${Date.now()}.webm`);
+  formData.append('chatId', currentChatId);
+  formData.append('senderId', userId);
+  formData.append('message', '');
+
+  try {
+    const res = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const msg = await res.json();
+    // Se emitirá automáticamente desde el backend
+  } catch (err) {
+    alert('❌ Error al enviar audio');
+    console.error(err);
+  }
+}
+
 // Enviar mensaje
 /*
 chatForm.addEventListener('submit', (e) => {
@@ -134,7 +246,6 @@ chatForm.addEventListener('submit', async (e) => {
 
     const msg = await res.json();
 
-    // Ya no es necesario socket.emit('new-message', msg) si el backend lo emite directamente
     chatInput.value = '';
     fileInput.value = '';
   } catch (error) {
@@ -192,6 +303,43 @@ function renderMessage(msg) {
       img.onclick = () => openImageModal(link.href);
       div.appendChild(img);
     }
+
+    // 🔊 Si es audio
+    /*else if (msg.file.mimetype.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = link.href;
+      audio.style.display = 'block';
+      audio.style.marginTop = '8px';
+      audio.style.width = '100%'; // barrita amplia
+      div.appendChild(audio);
+    }*/
+   else if (msg.file.mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = link.href;
+    audio.style.display = 'block';
+    audio.style.marginTop = '8px';
+    audio.style.width = '100%';
+
+    const canPlay = audio.canPlayType(msg.file.mimetype);
+    if (!canPlay || canPlay === '') {
+      const warning = document.createElement('p');
+      warning.textContent = `⚠️ Este navegador podría no soportar el formato: ${msg.file.mimetype}`;
+      warning.style.color = 'orange';
+      warning.style.fontSize = '12px';
+      div.appendChild(warning);
+    }
+
+    div.appendChild(audio);
+  }
+    // 🗃️ Otros archivos (solo deja el link)
+    else {
+      const info = document.createElement('p');
+      info.textContent = '📄 Archivo disponible para descarga';
+      div.appendChild(info);
+    }
+
   }
 
   if (msg.content?.trim()) {

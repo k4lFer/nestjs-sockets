@@ -6,7 +6,7 @@ export class MessageMongo {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   sender: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   content: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Chat', required: true })
@@ -15,7 +15,10 @@ export class MessageMongo {
   @Prop({ type: Date, default: Date.now })
   timestamp: Date;
 
-   @Prop({
+  @Prop({ type: String, enum: ['sent', 'seen'], default: 'sent' })
+  status: 'sent' | 'seen';
+
+  @Prop({
     type: {
       filename: String,
       mimetype: String,

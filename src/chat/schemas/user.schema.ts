@@ -5,7 +5,10 @@ import { Document, Types } from "mongoose";
 export class UserMongo {
   @Prop({ required: true }) username: string;
   @Prop({ required: true }) password: string;
-  @Prop() socketId?: string; 
+  @Prop() socketId?: string;
+  
+  @Prop() email?: string;
+  @Prop() bio?: string;
 
   @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
   friends: Types.ObjectId[];
@@ -15,6 +18,8 @@ export class UserMongo {
 
   @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
   sentRequests: Types.ObjectId[];
+
+  @Prop({ type: Date, default: Date.now }) lastSeen: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserMongo);

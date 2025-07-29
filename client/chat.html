@@ -25,11 +25,21 @@
           <div class="chat-input">
             <form id="chat-form">
               <div class="input-group">
-                <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." required />
+                <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." />
                 <input type="file" id="file-input" class="file-input" />
+                <button type="button" id="record-btn" class="btn" title="Grabar audio 🎤">🎤</button>
+                <span id="recording-timer" style="margin-left: 8px; font-size: 14px; color: red; display: none;">⏱ 00:00</span>
                 <button type="submit" class="btn btn-primary">Enviar</button>
               </div>
             </form>
+            
+            <div id="audio-preview-container" style="margin-top: 8px; display: none;">
+            <audio id="audio-preview" controls style="width: 100%;"></audio>
+            <div style="margin-top: 4px;">
+              <button id="send-audio-btn" class="btn btn-primary">Enviar Audio</button>
+              <button id="cancel-audio-btn" class="btn btn-secondary" style="margin-left: 8px;">Cancelar</button>
+            </div>
+          </div>
           </div>
         </div>
 

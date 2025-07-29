@@ -35,6 +35,22 @@ async joinUserById(userId: string, socketId: string): Promise<UserDocument> {
     });
   }
 
+  async updateMessageStatus(messageId: string, status: 'sent' | 'seen') {
+    const message = await this.messageModel.findById(messageId);
+    if (!message) throw new Error('Mensaje no encontrado');
+
+    message.status = status;
+    await message.save();
+  }
+
+  async updateLastSeen(socketId: string) {
+    const user = await this.userModel.findOne({ socketId });
+    if (user) {
+      user.lastSeen = new Date();
+      await user.save();
+    }
+  }
+
   async getOrCreatePrivateChat(userAId: string, userBId: string) {
     const existing = await this.chatModel.findOne({
       isGroup: false,
